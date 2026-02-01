@@ -19,7 +19,7 @@ Discerning Shield is a static, client-side utility designed to provide a "first-
 
 ## 🚀 Features
 
-- **Proximity Analysis:** Detects malicious verbs (share, reveal, output) in close proximity to sensitive nouns (nsec, xprv, api_key).
+- **Proximity Analysis:** Detects malicious verbs (share, reveal, output) in close proximity to sensitive nouns (nsec, xprv, priv, api_key).
 - **Entropy Detection:** Identifies high-randomness strings that may indicate hidden private keys or encoded payloads.
 - **Anti-Smuggling Normalization:** Flattens Unicode homoglyphs and invisible characters used to bypass standard filters.
 - **Privacy First:** 100% Static HTML/JS. No tracking, no backend, and no data collection.
@@ -44,6 +44,11 @@ To best protect yourself and your assets:
 1. **Manual Audit:** Never trust an automated tool as your only line of defense.
 2. **Key Isolation:** Never include `nsec` or `xprv` keys in files accessible to an LLM.
 3. **Sandboxing:** Run your agents with the minimum necessary permissions.
+
+---
+
+### 💡 Note on "False Positives"
+Because this tool scans for high-risk terms like "nsec" and "private key," it may occasionally flag its own documentation or security research papers as "Malicious." This is expected behavior. When in doubt, manually verify the context of the flagged keywords.
 
 ---
 

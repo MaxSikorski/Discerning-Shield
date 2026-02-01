@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discerning Shield</title>
+    
+    <link id="favicon" rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
+
+    <style>
+        :root {
+            --bg: #ffffff; --text: #1d1d1f; --secondary: #86868b;
+            --border: #d2d2d7; --accent: #0071e3; --card: rgba(245, 245, 247, 0.8);
+            --textarea-bg: #ffffff; --danger: #ff3b30; --safe: #34c759;
+        }
+        [data-theme='dark'] {
+            --bg: #000000; --text: #f5f5f7; --secondary: #a1a1a6;
+            --border: #333336; --accent: #2997ff; --card: rgba(28, 28, 30, 0.8);
+            --textarea-bg: #121212;
+        }
+
+        * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro", "Helvetica Neue", sans-serif;
+            background-color: var(--bg); color: var(--text);
+            margin: 0; padding: 20px; display: flex; flex-direction: column;
+            align-items: center; min-height: 100vh; transition: background 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Top Navigation */
+        .nav { width: 100%; max-width: 800px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 60px; margin-top: 20px; }
+        .logo { font-weight: 600; font-size: 1.1rem; letter-spacing: -0.02em; display: flex; align-items: center; gap: 8px; }
+        
+        #themeToggle { 
+            background: none; border: none; cursor: pointer; color: var(--text); padding: 10px;
+            border-radius: 50%; transition: all 0.2s ease;
+        }
+        #themeToggle:hover { background: var(--card); transform: scale(1.1); }
+
+        /* Input Terminal */
+        .terminal { width: 100%; max-width: 800px; }
+        .input-container {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 20px; padding: 24px; backdrop-filter: blur(30px);
+            margin-bottom: 24px; box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+        }
+        textarea {
+            width: 100%; height: 280px; background: transparent; border: none;
+            color: var(--text); font-family: "SF Mono", "ui-monospace", monospace;
+            font-size: 15px; line-height: 1.6; outline: none; resize: none;
+        }
+
+        /* Buttons */
+        .controls { display: flex; gap: 16px; margin-bottom: 40px; }
+        button.action-btn {
+            background: var(--text); color: var(--bg); border: none;
+            padding: 14px 28px; border-radius: 12px; font-weight: 500;
+            cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 15px;
+        }
+        button.action-btn:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        button.secondary-btn {
+            background: transparent; border: 1px solid var(--border);
+            color: var(--text); padding: 14px 28px; border-radius: 12px;
+            cursor: pointer; transition: all 0.2s ease;
+        }
+
+        /* Result Cards */
+        .results { display: none; width: 100%; animation: slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        .card { padding: 24px; border-radius: 18px; margin-bottom: 16px; border: 1px solid var(--border); transition: 0.3s ease; }
+        .danger-card { border-left: 6px solid var(--danger); background: var(--card); }
+        .safe-card { border-left: 6px solid var(--safe); background: var(--card); }
+        
+        .finding-label { font-weight: 600; font-size: 16px; margin-bottom: 6px; display: block; }
+        .finding-sub { font-size: 14px; color: var(--secondary); line-height: 1.5; }
+
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<div class="nav">
+    <div class="logo"><span>🛡️</span> Discerning Shield</div>
+    <button id="themeToggle">
+        <svg id="themeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path id="themePath" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+</div>
+
+<div class="terminal">
+    <div class="input-container" id="dropZone">
+        <textarea id="mainInput" placeholder="Paste content or drag files here..."></textarea>
+    </div>
+
+    <div class="controls">
+        <button class="action-btn" onclick="executeShieldScan()">Analyze Security</button>
+        <button class="secondary-btn" onclick="clearShield()">Reset</button>
+    </div>
+
+    <div id="resultsView" class="results"></div>
+</div>
+
+<script>
+    // 1. Apple-style Theme Switcher
+    const THEME_KEY = 'discerning_shield_theme';
+    function applyTheme(mode) {
+        document.documentElement.setAttribute('data-theme', mode);
+        localStorage.setItem(THEME_KEY, mode);
+        const path = document.getElementById('themePath');
+        path.setAttribute('d', mode === 'dark' ? 
+            'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-11.314l.707.707m11.314 11.314l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z' : 
+            'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z');
+    }
+
+    document.getElementById('themeToggle').onclick = () => {
+        const current = document.documentElement.getAttribute('data-theme');
+        applyTheme(current === 'dark' ? 'light' : 'dark');
+    };
+    applyTheme(localStorage.getItem(THEME_KEY) || 'light');
+
+    // 2. Entropy and Pattern Logic
+    function getEntropy(str) {
+        if (!str || str.length < 8) return 0;
+        let freq = {};
+        for (let i=0; i<str.length; i++) { freq[str[i]] = (freq[str[i]] || 0) + 1; }
+        let ent = 0;
+        for (let f in freq) { let p = freq[f]/str.length; ent -= p * Math.log2(p); }
+        return ent;
+    }
+
+    function executeShieldScan() {
+        const raw = document.getElementById('mainInput').value.trim();
+        const view = document.getElementById('resultsView');
+        if (!raw) return;
+
+        view.innerHTML = '';
+        view.style.display = 'block';
+
+        let flags = [];
+
+        // Security Matrices
+        if (/(ignore|disregard|forget|skip|bypass|override).*(instruction|rule|prompt|previous|system)/gi.test(raw)) {
+            flags.push({t: "Logic Override", d: "High risk: Text attempts to suppress AI safety constraints."});
+        }
+        if (/(you are now|act as|become|pretend to be|persona|identity)/gi.test(raw)) {
+            flags.push({t: "Identity Injection", d: "Detected attempt to hijack the model's persona."});
+        }
+        if (/(nsec|xprv|seed|private key|webhook|api_key|http:\/\/|https:\/\/)/gi.test(raw)) {
+            flags.push({t: "Data Exfiltration Risk", d: "Contains sensitive protocol identifiers or outbound network hooks."});
+        }
+        
+        // Entropy Check (Keys/Base64)
+        raw.split(/\s+/).forEach(word => {
+            if (word.length > 45 && getEntropy(word) > 4.2) {
+                flags.push({t: "Entropy Alert", d: `High-randomness string found: "...${word.substring(0,10)}...". Possible hidden key or payload.`});
+            }
+        });
+
+        if (flags.length > 0) {
+            // Deduplicate
+            const unique = Array.from(new Set(flags.map(f => JSON.stringify(f)))).map(s => JSON.parse(s));
+            unique.forEach(f => {
+                const div = document.createElement('div');
+                div.className = 'card danger-card';
+                div.innerHTML = `<span class="finding-label">🚨 ${f.t}</span><span class="finding-sub">${f.d}</span>`;
+                view.appendChild(div);
+            });
+        } else {
+            const div = document.createElement('div');
+            div.className = 'card safe-card';
+            div.innerHTML = `<span class="finding-label">✅ Scan Clean</span><span class="finding-sub">No known injection signatures or high-entropy anomalies detected.</span>`;
+            view.appendChild(div);
+        }
+    }
+
+    function clearShield() {
+        document.getElementById('mainInput').value = '';
+        document.getElementById('resultsView').style.display = 'none';
+    }
+</script>
+
+</body>
+</html>
